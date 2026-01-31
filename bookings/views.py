@@ -22,7 +22,7 @@ class CreateBookingView(APIView):
             payload = serializer.validated_data
 
             # URL Сервиса Б (проверь порт!)
-            SERVICE_B_URL = "https://service-b-j1gc.onrender.com"
+            SERVICE_B_URL = "https://service-b-j1gc.onrender.com/api/check/"
 
             try:
                 # 2. Пробуем достучаться до Сервиса Б
