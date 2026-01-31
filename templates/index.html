@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бронирование аудиторий</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding-top: 50px; }
+        .booking-container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 15px; shadow: 0 0 15px rgba(0,0,0,0.1); }
+        .status-badge { font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="booking-container shadow-sm">
+        <h2 class="text-center mb-4">🚀 Сервис А: Бронирование</h2>
+
+        <form id="bookingForm" class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Аудитория</label>
+                <input type="text" id="room" class="form-control" placeholder="Напр: 101" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Тип мероприятия</label>
+                <select id="type" class="form-select">
+                    <option value="lesson">Занятие</option>
+                    <option value="exam">Экзамен</option>
+                    <option value="meeting">Встреча</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Начало</label>
+                <input type="datetime-local" id="start" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Конец</label>
+                <input type="datetime-local" id="end" class="form-control" required>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Ваш Email</label>
+                <input type="email" id="email" class="form-control" placeholder="name@example.com" required>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary w-100">Отправить запрос в Сервис Б</button>
+            </div>
+        </form>
+
+        <hr class="my-5">
+
+        <h4 class="mb-3">История ваших броней</h4>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Аудитория</th>
+                        <th>Время</th>
+                        <th>Тип</th>
+                    </tr>
+                </thead>
+                <tbody id="bookingTable">
+                    {% for booking in bookings %}
+                    <tr>
+                        <td><strong>{{ booking.room_number }}</strong></td>
+                        <td>{{ booking.start_time|date:"H:i" }} - {{ booking.end_time|date:"H:i" }}</td>
+                        <td><span class="badge bg-info text-dark">{{ booking.booking_type }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">Бронирований пока нет</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('bookingForm').onsubmit = async function(e) {
+    e.preventDefault();
+
+    // ВАЖНО: Ключи (room_number и т.д.) должны совпадать с Serializer в Django
+    const data = {
+        room_number: document.getElementById('room').value,
+        start_time: document.getElementById('start').value,
+        end_time: document.getElementById('end').value,
+        booking_type: document.getElementById('type').value,
+        user_email: document.getElementById('email').value
+    };
+
+    console.log("Отправка в Сервис А:", data);
+
+    try {
+        const response = await fetch('/api/create-booking/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Если ты используешь CSRF, раскомментируй строку ниже или добавь @csrf_exempt во views.py
+                // 'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('✅ Одобрено Сервисом Б и сохранено!');
+            location.reload();
+        } else {
+            // Выводим конкретную причину отказа от Сервиса Б
+            alert('❌ Отказ: ' + (result.error || JSON.stringify(result)));
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Сервис А не смог связаться с Сервисом Б');
+    }
+};
+
+// Функция для работы с CSRF (если понадобится)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+</body>
+</html>
